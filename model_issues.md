@@ -8,7 +8,7 @@
 
 2 malformed helices:
 
-* residues 189-207
+* residues 189-206
 * residues 462-489
 
 ![191-206](images/bad_helix_191-206.png)

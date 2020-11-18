@@ -155,8 +155,8 @@ setup.constraint_set(cs)
 setup.apply(pose)
 
 stm = pyrosetta.rosetta.core.scoring.ScoreTypeManager()
-scorefxn.set_weight(stm.score_type_from_name("atom_pair_constraint"), 2)
-scorefxn.set_weight(stm.score_type_from_name("coordinate_constraint"), 5)
+scorefxn.set_weight(stm.score_type_from_name("atom_pair_constraint"), 2) # then lowered to 1.
+scorefxn.set_weight(stm.score_type_from_name("coordinate_constraint"), 5) # then lowered to 1.
 
 # ======== Relax =======================================================================================================
 

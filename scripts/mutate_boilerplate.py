@@ -4,6 +4,7 @@ import pyrosetta
 import re, os, csv
 from typing import Optional, List, Dict, Union
 
+
 class Mutation:
     """
     A mutation is an object that has all the details of the mutation.
@@ -41,9 +42,14 @@ class Mutation:
         self.to_resn3 = self._name3[rex.group(3)]
         pose2pdb = pose.pdb_info().pdb2pose
         self.pose_resi = pose2pdb(res=self.pdb_resi, chain=self.chain)
-        self.pose_residue = pose.residue(self.pose_resi)
-        self.pose_resn1 = self.pose_residue.name1()
-        self.pose_resn3 = self.pose_residue.name3()
+        if self.pose_resi != 0:
+            self.pose_residue = pose.residue(self.pose_resi)
+            self.pose_resn1 = self.pose_residue.name1()
+            self.pose_resn3 = self.pose_residue.name3()
+        else:
+            self.pose_residue = None
+            self.pose_resn1 = None
+            self.pose_resn3 = None
 
     def parse_mutation(self, mutation):
         if mutation[:2] == 'p.':
@@ -52,16 +58,18 @@ class Mutation:
             return mutation
         else:
             value2key = lambda value: list(self._name3.keys())[list(self._name3.values()).index(value.upper())]
-            return value2key(mutation[:3])+mutation[3:-3]+value2key(mutation[-3:])
+            return value2key(mutation[:3]) + mutation[3:-3] + value2key(mutation[-3:])
 
     def is_valid(self):
         return self.pose_resn1 == self.from_resn1
 
     def assert_valid(self):
-        assert self.is_valid(), f'residue {self.pose_resi}(pose)/{self.pdb_resi}(pdb) is a {self.pose_resn3}, not a {self.from_resn3}'
+        assert self.is_valid(), f'residue {self.pose_resi}(pose)/{self.pdb_resi}(pdb) ' + \
+                                f'is a {self.pose_resn3}, not a {self.from_resn3}'
 
     def __str__(self):
         return self.mutation
+
 
 class Variant:
     """
@@ -96,7 +104,7 @@ class Variant:
     def relax_around_mover(self,
                            pose: pyrosetta.Pose,
                            mutation=None,
-                           resi: int=None, chain: str=None, cycles=5, distance=5,
+                           resi: int = None, chain: str = None, cycles=5, distance=5,
                            cartesian=False, own_chain_only=False) -> None:
         """
         Relaxes pose ``distance`` around resi:chain or mutation
@@ -122,7 +130,7 @@ class Variant:
         ####
         n = self.get_neighbour_vector(pose=pose, resi=resi, chain=chain, distance=distance,
                                       own_chain_only=own_chain_only)
-        #print(pyrosetta.rosetta.core.select.residue_selector.ResidueVector(n))
+        # print(pyrosetta.rosetta.core.select.residue_selector.ResidueVector(n))
         movemap.set_bb(False)
         movemap.set_bb(allow_bb=n)
         movemap.set_chi(False)
@@ -138,7 +146,7 @@ class Variant:
                              include_focus_in_subset: bool = True,
                              own_chain_only: bool = False) -> pyrosetta.rosetta.utility.vector1_bool:
         resi_sele = pyrosetta.rosetta.core.select.residue_selector.ResidueIndexSelector()
-        if chain is None: # pose numbering.
+        if chain is None:  # pose numbering.
             resi_sele.set_index(resi)
         else:
             resi_sele.set_index(pose.pdb_info().pdb2pose(chain=chain, res=resi))
@@ -161,6 +169,8 @@ class Variant:
             mutant = mutation
         else:
             raise TypeError(f'Does not accept mutation of type {mutation.__class__.__name__}')
+        if mutant.pose_resi == 0:
+            raise ValueError('Not in pose')
         if self.strict_about_starting_residue:
             mutant.assert_valid()
         return mutant
@@ -242,7 +252,7 @@ class Variant:
         # pyrosetta.rosetta.core.scoring.automorphic_rmsd(residueA, residueB, False)
         return pyrosetta.rosetta.core.scoring.all_atom_rmsd(poseA, poseB, residues)
 
-    def does_contain(self, mutation: Union[Mutation, str], chain: str=None) -> bool:
+    def does_contain(self, mutation: Union[Mutation, str], chain: Optional[str] = None) -> bool:
         assert isinstance(mutation, Mutation) or chain is not None, 'mutation as str requires chain.'
         if isinstance(mutation, str):
             mutation = Mutation(mutation, chain, self.pose)
@@ -259,7 +269,7 @@ class Variant:
                         interfaces=(),
                         modelname='holo',
                         preminimise=False,
-                        verbose = True,
+                        verbose=True,
                         distance=10,
                         cycles=5):
         if not os.path.exists('variants'):
@@ -285,49 +295,66 @@ class Variant:
                 for interface_name, interface_scheme in interfaces:
                     ref_interface_dG[interface_name] = self.score_interface(self.pose, interface_scheme)['interface_dG']
             else:
-                pass # calculated for each.
+                pass  # calculated for each.
             ## muts
             for mut in mutations:
-                mutation = self.parse_mutation(mut, chain)
-                if verbose:
-                    print(mutation)
-                if not self.does_contain(mutation):
+                try:
+                    mutation = self.parse_mutation(mut, chain)
                     if verbose:
-                        print('Absent')
-                    continue
-                if preminimise:
-                    premutant = self.pose.clone()
-                    self.relax_around_mover(premutant,
-                                             mutation=mutation,
-                                             distance=distance,
-                                             cycles=cycles)
-                    n = self.scorefxn(premutant)
-                else:
-                    premutant = self.pose
-                variant = self.make_mutant(premutant,
-                                            mutation=mutation,
-                                            distance=distance,
-                                            cycles=cycles)
-                variant.dump_pdb(f'variants/{modelname}.{mutation}.pdb')
-                m = self.scorefxn(variant)
-                data = {'model': modelname,
-                        'mutation': str(mutation),
-                        'complex_ddG': m - n,
-                        'complex_native_dG': n,
-                        'complex_mutant_dG': m,
-                        'FA_RMSD': self.FA_RMSD(self.pose, variant, resi=mutation.pose_resi, chain=None, distance=distance),
-                        'CA_RMSD': self.CA_RMSD(self.pose, variant, resi=mutation.pose_resi, chain=None, distance=distance)
-                        }
-                for interface_name, interface_scheme in interfaces:
-                    if self.has_interface(variant, interface_scheme):
-                        if preminimise:
-                            ref_interface_dG[interface_name] = self.score_interface(premutant, interface_scheme)['interface_dG']
-                        print(f'{interface_name} ({interface_scheme}) applicable to {modelname}')
-                        i = self.score_interface(variant, interface_scheme)['interface_dG']
+                        print(mutation)
+                    if not self.does_contain(mutation):
+                        if verbose:
+                            print('Absent')
+                        continue
+                    if preminimise:
+                        premutant = self.pose.clone()
+                        self.relax_around_mover(premutant,
+                                                mutation=mutation,
+                                                distance=distance,
+                                                cycles=cycles)
+                        n = self.scorefxn(premutant)
                     else:
-                        print(f'{interface_name} ({interface_scheme}) not applicable to {modelname}')
-                        i = float('nan')
-                    data[f'{interface_name}_interface_native_dG'] = ref_interface_dG[interface_name]
-                    data[f'{interface_name}_interface_mutant_dG'] = i
-                    data[f'{interface_name}_interface_ddG'] = i - ref_interface_dG[interface_name]
+                        premutant = self.pose
+                    variant = self.make_mutant(premutant,
+                                               mutation=mutation,
+                                               distance=distance,
+                                               cycles=cycles)
+                    variant.dump_pdb(f'variants/{modelname}.{mutation}.pdb')
+                    m = self.scorefxn(variant)
+                    data = {'model': modelname,
+                            'mutation': str(mutation),
+                            'complex_ddG': m - n,
+                            'complex_native_dG': n,
+                            'complex_mutant_dG': m,
+                            'FA_RMSD': self.FA_RMSD(self.pose,
+                                                    variant,
+                                                    resi=mutation.pose_resi,
+                                                    chain=None,
+                                                    distance=distance),
+                            'CA_RMSD': self.CA_RMSD(self.pose,
+                                                    variant,
+                                                    resi=mutation.pose_resi,
+                                                    chain=None,
+                                                    distance=distance)
+                            }
+                    for interface_name, interface_scheme in interfaces:
+                        if self.has_interface(variant, interface_scheme):
+                            if preminimise:
+                                ref_interface_dG[interface_name] = self.score_interface(premutant, interface_scheme)[
+                                    'interface_dG']
+                            print(f'{interface_name} ({interface_scheme}) applicable to {modelname}')
+                            i = self.score_interface(variant, interface_scheme)['interface_dG']
+                        else:
+                            print(f'{interface_name} ({interface_scheme}) not applicable to {modelname}')
+                            i = float('nan')
+                        data[f'{interface_name}_interface_native_dG'] = ref_interface_dG[interface_name]
+                        data[f'{interface_name}_interface_mutant_dG'] = i
+                        data[f'{interface_name}_interface_ddG'] = i - ref_interface_dG[interface_name]
+                except Exception as error:
+                    msg = f"{error.__class__.__name__}: {error}"
+                    print(msg)
+                    data = {'model': modelname,
+                            'mutation': str(mut),
+                            'complex_ddG': msg
+                            }
                 out.writerow(data)

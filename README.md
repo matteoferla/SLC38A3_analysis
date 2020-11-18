@@ -7,6 +7,8 @@ SLC38A3 is Sodium-coupled neutral amino acid transporter 3 ([Uniprot: S38A3_HUMA
 There is no crystal structure available, but there is one for SLC38A9, PDB: 6C08
 — described well in [Lei et al. 2018](https://www.nature.com/articles/s41594-018-0072-2).
 
+![mem](images/fig_membraned.png)
+
 ## Reference
 
 With the exception of the Extracellular part, Phyre and ITasser produced nearly identical structures.

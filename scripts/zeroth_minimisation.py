@@ -1,6 +1,4 @@
 # ED without membrane
-
-
 # ======== init pyrosetta ==============================================================================================
 import pyrosetta
 from .init_boilerplate import make_option_string

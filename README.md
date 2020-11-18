@@ -16,16 +16,13 @@ There is no support, or need, for the extracellular fluff, so it was removed.
 
 Swissmodel has no useful model, possibly due to this.
 The Phyre model was chosen because it deviates less from the reference PDB: 6C08.
-With the hindsight knowledge that the extracellular fluff was causing low similarity, 
-threading EM-fluff–stripped SLC38A3 against electron-density in membrane minimised PDB:6C08 
-with `pyrosetta.rosetta.protocols.comparative_modeling.ThreadingMover` would have been better for the minimation step.
-This is because membrane protein can thread weirdly in I-Tasser and Phyre.
 
 ![cluster](images/bundle_after_relax.png)
 
 ### ED and Membrane
 
-Being a membrane protein the RosettaMP framework was used, but in conjuction with an initial constraint of the 6C08 electron density.
+Being a membrane protein the RosettaMP framework was used, but in a first step —to find odd bonds— an initial minimisation restrained against the 6C08 electron density was done.
+
 I.e. the SLC38A3 model was aligned against the OPM model of 6C08, membrane-ified, and then moved to the 6C08 structure as located in 
 the 2Fc-Fo map. This is slightly subpar to energy minimising the 6C08 structure as described below and threading against that, 
 but it's unlikely to make a difference.
@@ -48,7 +45,6 @@ In the [Lei et al. 2018](https://www.nature.com/articles/s41594-018-0072-2) manu
 ### Scorefunction
 
 It should be noted that `ref2015` scorefunction was used for initial steps, but subsequently `franklin2019` was.
-This mistake has not caused any issue because the model was energy minimised with the same scorefunction as for the ∆∆G score.
 
 The `ref2015` can be used with the membrane framework 
 (cf. [Alford et al. 2020](https://www.sciencedirect.com/science/article/pii/S000634952030237X)).

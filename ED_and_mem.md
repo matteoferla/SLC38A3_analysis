@@ -1,5 +1,12 @@
 # ED and Membrane
 
+With the hindsight knowledge that the extracellular fluff was causing low similarity, 
+threading EM-fluff–stripped SLC38A3 against electron-density in membrane minimised PDB:6C08 
+with `pyrosetta.rosetta.protocols.comparative_modeling.ThreadingMover` might have been better for the minimation step.
+This is because membrane protein can thread weirdly in I-Tasser and Phyre.
+
+## Commands
+
 The following command add a membrane vector for a OPM-aligned structure.
 Pyrosetta only cares 
 OMP files have `REMARK      1/2 of bilayer thickness:   14.3` and a `CRYST` entry

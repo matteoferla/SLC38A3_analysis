@@ -52,20 +52,3 @@ The `ref2015` can be used with the membrane framework
 (cf. [Alford et al. 2020](https://www.sciencedirect.com/science/article/pii/S000634952030237X)).
 Although RosettaMP was released with `mpframework_smooth_fa_2012` scorefunction, the latest scorefunction `franklin2019` is newer/better.
 There is also `ref2015_memb`, which was not used as this has nothing to do with the RosettaMP framework.
-
-
-
-
-
-
-The experimentally verified sodium-binding site at Asn82 and Thr384 for rat SLC38A2 and Asn76 and Thr380 for rat SLC38A3 mutually supports the homology models21,22,23. The presence of tyrosine at residue 337 in rat SLC38A2 and at residue 333 in rat SLC38A3 seems to be absolutely conserved in members of the SLC38 family, supporting the resembling hydrophobic center formed from TM1 and TM7 in the cytosol-open conformation. 
-
-
-Model     | ref2015            | ED@x10             | match              |
----       |---                 |---                 |---                 |
-phyre     | -505.7255405776329 | -1555.568565969401 | 0.5454411161702216 |
-ITasser_1 | -485.202031458198  | -1479.6403945901009| 0.5194825649250043 |
-ITasser_2 | -650.07462829783   | -1631.7482735300619| 0.5198648811407917 | 
-ITasser_3 | -610.4824420913833 | -1575.206211524793 | 0.506169901609469  | 
-ITasser_4 | -595.8223532962597 | -1583.7138942869024| 0.5152178463685878 | 
-ITasser_5 | -664.672878951237  | -1668.2843620044193| 0.5260346892408705 |

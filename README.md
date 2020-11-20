@@ -44,6 +44,8 @@ In PDB:6C08 there is a bound amino acid, arginine, this was added to the model, 
 In the [Lei et al. 2018](https://www.nature.com/articles/s41594-018-0072-2) manuscript there is talk of a sodium being able to bind it this conformation
 (cytoplasmically open). Therefore was added.
 
+![ligands](images/sodium.png)
+
 ### Scorefunction
 
 It should be noted that `ref2015` scorefunction was used for initial steps, but subsequently `franklin2019` was.
